@@ -21,6 +21,16 @@ from dotenv import load_dotenv
 # Load .env if present
 load_dotenv()
 
+# Sync Streamlit Cloud secrets to os.environ so all components and clients can access them
+try:
+    if hasattr(st, "secrets"):
+        for sec_k in st.secrets:
+            sec_val = st.secrets[sec_k]
+            if isinstance(sec_val, str) and sec_k not in os.environ:
+                os.environ[sec_k] = sec_val.strip().replace("\n", "").replace("\r", "")
+except Exception:
+    pass
+
 from app.config import (
     FAIRNESS_NOTICE,
     MAX_BATCH_SIZE,

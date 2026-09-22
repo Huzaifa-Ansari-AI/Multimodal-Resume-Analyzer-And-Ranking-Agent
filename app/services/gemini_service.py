@@ -15,7 +15,12 @@ from typing import Optional
 
 from google import genai
 
-from app.config import GEMINI_API_KEY, GEMINI_FALLBACK_MODEL, GEMINI_MODEL
+from app.config import (
+    GEMINI_API_KEY,
+    GEMINI_FALLBACK_MODEL,
+    GEMINI_MODEL,
+    get_gemini_api_key,
+)
 from app.models.resume import JobMatchAnalysis, ResumeAnalysis, ResumeWithJobMatch
 from app.prompts.analysis import SYSTEM_INSTRUCTION, build_analysis_prompt
 from app.services.document_processor import ProcessedDocument, build_gemini_input
@@ -38,7 +43,7 @@ def get_client() -> genai.Client:
     Raises:
         ValueError: If the API key is not configured.
     """
-    api_key = GEMINI_API_KEY
+    api_key = get_gemini_api_key() or GEMINI_API_KEY
     if not api_key:
         raise ValueError(
             "GEMINI_API_KEY is not set. "

@@ -1,5 +1,11 @@
 # 📄 Multimodal Resume Analyzer & Recruiter Ranking Agent
 
+[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://resume-analyzer-of-huzaifa-ansari.streamlit.app)
+[![Python 3.12](https://img.shields.io/badge/Python-3.12-blue.svg)](https://www.python.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+
+🚀 **Live Application:** [resume-analyzer-of-huzaifa-ansari.streamlit.app](https://resume-analyzer-of-huzaifa-ansari.streamlit.app)
+
 An AI-powered resume analysis application that uses **Google Gemini's multimodal document understanding** to analyze resumes as complete documents — not just extracted text. Supports PDFs, images, DOCX, and more. Built for job seekers, students, professionals, and recruiters.
 
 ## ✨ Features
@@ -176,13 +182,19 @@ The analyzer uses a transparent **100-point weighted rubric**:
 
 ## 🚀 Deployment
 
-### Streamlit Community Cloud
+The project is deployed on **Streamlit Community Cloud** and accessible globally:
+- **Live URL:** [https://resume-analyzer-of-huzaifa-ansari.streamlit.app](https://resume-analyzer-of-huzaifa-ansari.streamlit.app)
 
-1. Push to GitHub
+### Deploying Your Own Instance
+
+1. Fork or clone this repository
 2. Go to [share.streamlit.io](https://share.streamlit.io)
 3. Connect your repository
-4. Set `GEMINI_API_KEY` in Streamlit secrets
-5. Set main file path to `app/ui/main_app.py`
+4. Set `GEMINI_API_KEY` in **App Settings → Secrets**:
+   ```toml
+   GEMINI_API_KEY = "your-gemini-api-key"
+   ```
+5. Set main file path to `app/ui/main_app.py` and click **Deploy**
 
 ### Docker (Optional)
 

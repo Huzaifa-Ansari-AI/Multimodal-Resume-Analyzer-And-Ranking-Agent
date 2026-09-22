@@ -6,7 +6,25 @@ from pathlib import Path
 # ---------------------------------------------------------------------------
 # API / Model
 # ---------------------------------------------------------------------------
-GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
+def get_gemini_api_key() -> str:
+    """Retrieve Gemini API key from environment variables or Streamlit secrets."""
+    # 1. Check environment variables (.env / system env)
+    key = os.getenv("GEMINI_API_KEY", "").strip()
+    if key:
+        return key
+
+    # 2. Check Streamlit secrets (Streamlit Community Cloud deployment)
+    try:
+        import streamlit as st
+        if hasattr(st, "secrets") and "GEMINI_API_KEY" in st.secrets:
+            return str(st.secrets["GEMINI_API_KEY"]).strip().replace("\n", "").replace("\r", "")
+    except Exception:
+        pass
+
+    return ""
+
+
+GEMINI_API_KEY: str = get_gemini_api_key()
 GEMINI_MODEL: str = os.getenv("GEMINI_MODEL", "gemini-3.6-flash")
 GEMINI_FALLBACK_MODEL: str = os.getenv("GEMINI_FALLBACK_MODEL", "gemini-3.5-flash-lite")
 
