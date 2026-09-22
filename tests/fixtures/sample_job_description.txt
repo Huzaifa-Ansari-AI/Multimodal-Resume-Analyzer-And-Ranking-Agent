@@ -1,0 +1,39 @@
+Senior Python Developer
+
+Company: Acme Technologies
+Location: Remote
+Type: Full-time
+
+About the Role:
+We are looking for a Senior Python Developer to join our backend engineering
+team. You will build and maintain scalable APIs and data pipelines that
+serve millions of users.
+
+Requirements:
+- 5+ years of professional Python development experience
+- Strong experience with FastAPI or Django
+- Experience with PostgreSQL and Redis
+- Experience with Docker and Kubernetes
+- Familiarity with AWS services (EC2, S3, Lambda)
+- Strong understanding of REST API design principles
+- Experience with CI/CD pipelines
+- BS/MS in Computer Science or equivalent practical experience
+
+Preferred Qualifications:
+- Experience with microservices architecture
+- Experience with message queues (RabbitMQ, Kafka)
+- Experience with monitoring tools (Grafana, Prometheus)
+- Open source contributions
+- AWS or GCP certifications
+
+Nice to Have:
+- Experience with Go or Rust
+- Experience with machine learning pipelines
+- Public speaking or technical writing experience
+
+What We Offer:
+- Competitive salary ($150K-$200K)
+- Remote-first culture
+- Health, dental, and vision insurance
+- 401(k) with company match
+- Annual learning budget

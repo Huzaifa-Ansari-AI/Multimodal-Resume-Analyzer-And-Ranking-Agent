@@ -1,0 +1,57 @@
+JOHN DOE
+Software Engineer
+Email: john.doe@example.com | Phone: (555) 123-4567
+Location: San Francisco, CA | LinkedIn: linkedin.com/in/johndoe
+Portfolio: johndoe.dev
+
+PROFESSIONAL SUMMARY
+Experienced software engineer with 4 years of experience building scalable
+web applications and APIs. Proficient in Python, JavaScript, React, and
+cloud technologies. Passionate about clean code and test-driven development.
+
+EXPERIENCE
+
+Senior Software Engineer | TechCorp Inc. | Jan 2022 – Present
+- Led development of a microservices platform serving 500K daily active users
+- Reduced API response time by 40% through database optimization and caching
+- Mentored 3 junior developers, improving team velocity by 25%
+- Implemented CI/CD pipeline reducing deployment time from 2 hours to 15 minutes
+
+Software Engineer | StartupXYZ | Jun 2020 – Dec 2021
+- Built RESTful APIs using Python/FastAPI handling 10K requests per second
+- Developed React frontend components used across 5 product features
+- Wrote comprehensive test suites achieving 92% code coverage
+- Collaborated with product team to define technical requirements
+
+PROJECTS
+
+Open Source CLI Tool | github.com/johndoe/cli-tool
+- Built a Python CLI tool for automating development workflows
+- Technologies: Python, Click, Docker
+- 200+ GitHub stars, adopted by 3 companies
+
+E-Commerce Platform | Personal Project
+- Full-stack e-commerce platform with payment processing
+- Technologies: Next.js, PostgreSQL, Stripe API
+- Handles 1000+ product listings with real-time search
+
+EDUCATION
+
+Bachelor of Science in Computer Science
+University of California, Berkeley | 2020
+GPA: 3.7/4.0 | Dean's List
+
+SKILLS
+
+Programming: Python, JavaScript, TypeScript, SQL, Go
+Frameworks: React, Next.js, FastAPI, Django, Express.js
+Cloud: AWS (EC2, S3, Lambda, RDS), Docker, Kubernetes
+Databases: PostgreSQL, MongoDB, Redis
+Tools: Git, GitHub Actions, Terraform, Grafana
+
+CERTIFICATIONS
+- AWS Certified Solutions Architect – Associate (2023)
+- Google Cloud Professional Data Engineer (2022)
+
+LANGUAGES
+English (Native), Spanish (Conversational)

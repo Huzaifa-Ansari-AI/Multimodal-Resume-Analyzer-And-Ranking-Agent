@@ -1,0 +1,9 @@
+[project]
+name = "resume-analyzer-agent"
+version = "1.0.0"
+description = "Multimodal Resume Analyzer & Recruiter Ranking Agent"
+requires-python = ">=3.10"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]

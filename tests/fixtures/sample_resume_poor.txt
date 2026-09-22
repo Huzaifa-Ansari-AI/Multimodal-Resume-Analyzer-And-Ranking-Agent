@@ -1,0 +1,12 @@
+jane smith
+
+i am looking for a job in tech
+
+experience:
+worked at some company for a while
+did stuff with computers
+
+skills: python, office
+
+education:
+some college
