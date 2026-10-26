@@ -119,6 +119,35 @@ class TestAnalyzeSingleResume:
         assert result.processing_status == "failed"
         assert "API_KEY" in result.error_message
 
+    @patch("app.services.resume_analyzer.get_ai_gateway_api_key", return_value="vck_test_key")
+    @patch("app.services.resume_analyzer.analyze_resume_gateway")
+    def test_gateway_provider_explicit(self, mock_gateway, mock_gw_key, sample_resume_bytes, mock_gemini_analysis_response):
+        mock_gateway.return_value = mock_gemini_analysis_response
+        result = analyze_single_resume(
+            "resume.txt",
+            sample_resume_bytes,
+            provider="gateway",
+            gateway_model="google/gemini-2.5-flash",
+        )
+        assert result.processing_status == "success"
+        assert result.provider_used == "vercel_gateway"
+        assert result.model_used == "google/gemini-2.5-flash"
+
+    @patch("app.services.resume_analyzer.get_ai_gateway_api_key", return_value="vck_test_key")
+    @patch("app.services.resume_analyzer.get_gemini_api_key", return_value="test_key")
+    @patch("app.services.resume_analyzer.analyze_resume")
+    @patch("app.services.resume_analyzer.analyze_resume_gateway")
+    def test_auto_fallback_to_gateway_on_gemini_failure(
+        self, mock_gateway, mock_gemini, mock_gemini_key, mock_gw_key, sample_resume_bytes, mock_gemini_analysis_response
+    ):
+        from app.services.gemini_service import GeminiServiceError
+        mock_gemini.side_effect = GeminiServiceError("Rate limit 429")
+        mock_gateway.return_value = mock_gemini_analysis_response
+
+        result = analyze_single_resume("resume.txt", sample_resume_bytes, provider="auto")
+        assert result.processing_status == "success"
+        assert result.provider_used == "vercel_gateway"
+
 
 class TestRanking:
     @pytest.fixture

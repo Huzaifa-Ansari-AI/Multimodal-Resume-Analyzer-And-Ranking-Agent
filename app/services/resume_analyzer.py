@@ -10,7 +10,15 @@ import logging
 import time
 from typing import Optional
 
-from app.config import SCORING_WEIGHTS
+from app.config import (
+    AI_GATEWAY_API_KEY,
+    AI_GATEWAY_DEFAULT_MODEL,
+    GEMINI_API_KEY,
+    GEMINI_MODEL,
+    SCORING_WEIGHTS,
+    get_ai_gateway_api_key,
+    get_gemini_api_key,
+)
 from app.models.resume import (
     CandidateSummary,
     FullResumeAnalysis,
@@ -20,6 +28,10 @@ from app.models.resume import (
 )
 from app.services.document_processor import ProcessedDocument, process_document
 from app.services.gemini_service import GeminiServiceError, analyze_resume, get_client
+from app.services.vercel_gateway_service import (
+    VercelGatewayServiceError,
+    analyze_resume_gateway,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -93,12 +105,14 @@ def analyze_single_resume(
     file_name: str,
     file_bytes: bytes,
     job_description: str | None = None,
+    provider: str = "auto",
+    gateway_model: str | None = None,
 ) -> FullResumeAnalysis:
     """Analyze a single resume end-to-end.
 
     Pipeline:
     1. Process document (validate, extract/encode)
-    2. Send to Gemini for multimodal analysis
+    2. Route to AI provider (Gemini Direct or Vercel AI Gateway) with auto-fallback
     3. Parse and validate structured output
     4. Calculate deterministic overall score
     5. Return assembled result
@@ -107,6 +121,8 @@ def analyze_single_resume(
         file_name: Original file name.
         file_bytes: Raw file content.
         job_description: Optional job description for matching.
+        provider: 'auto', 'gemini', or 'gateway'.
+        gateway_model: Specific model ID for Vercel AI Gateway.
 
     Returns:
         FullResumeAnalysis with all results and status.
@@ -115,14 +131,8 @@ def analyze_single_resume(
     client = None
     try:
         client = get_client()
-    except ValueError as e:
-        return FullResumeAnalysis(
-            resume_analysis=_empty_analysis(str(e)),
-            overall_score=0,
-            file_name=file_name,
-            processing_status="failed",
-            error_message=str(e),
-        )
+    except Exception:
+        client = None
 
     doc = process_document(file_name, file_bytes, gemini_client=client)
 
@@ -135,32 +145,95 @@ def analyze_single_resume(
             error_message=doc.error,
         )
 
-    # Step 2: Call Gemini
-    try:
-        raw_result = analyze_resume(doc, job_description, client=client)
-    except GeminiServiceError as e:
+    can_use_gemini = client is not None or bool(get_gemini_api_key() or GEMINI_API_KEY)
+    can_use_gateway = bool(get_ai_gateway_api_key() or AI_GATEWAY_API_KEY)
+
+    if not can_use_gemini and not can_use_gateway:
+        err_text = "Neither GEMINI_API_KEY nor AI_GATEWAY_API_KEY is configured."
         return FullResumeAnalysis(
-            resume_analysis=_empty_analysis(str(e)),
+            resume_analysis=_empty_analysis(err_text),
             overall_score=0,
             file_name=file_name,
             processing_status="failed",
-            error_message=str(e),
+            error_message=err_text + " Please set at least one in .env",
         )
-    except Exception as e:
-        logger.exception("Unexpected error analyzing %s", file_name)
-        return FullResumeAnalysis(
-            resume_analysis=_empty_analysis(f"Unexpected error: {e}"),
-            overall_score=0,
-            file_name=file_name,
-            processing_status="failed",
-            error_message=str(e),
-        )
+
+    # Step 2: Route request
+    raw_result = None
+    provider_used = "gemini"
+    model_used = GEMINI_MODEL
+
+    # Route A: Explicit Vercel Gateway OR Auto when Gemini is not configured
+    if provider == "gateway" or (provider == "auto" and not can_use_gemini and can_use_gateway):
+        target_model = gateway_model or AI_GATEWAY_DEFAULT_MODEL
+        try:
+            raw_result = analyze_resume_gateway(doc, job_description, model=target_model)
+            provider_used = "vercel_gateway"
+            model_used = target_model
+        except Exception as e:
+            logger.warning("Vercel AI Gateway error for %s: %s", file_name, e)
+            if provider == "auto" and can_use_gemini:
+                try:
+                    logger.info("Falling back to Gemini Direct for %s...", file_name)
+                    raw_result = analyze_resume(doc, job_description, client=client)
+                    provider_used = "gemini"
+                    model_used = GEMINI_MODEL
+                except Exception as fb_err:
+                    return FullResumeAnalysis(
+                        resume_analysis=_empty_analysis(f"Gateway failed: {e}; Gemini fallback: {fb_err}"),
+                        overall_score=0,
+                        file_name=file_name,
+                        processing_status="failed",
+                        error_message=f"Gateway failed: {e}. Gemini fallback failed: {fb_err}",
+                    )
+            else:
+                return FullResumeAnalysis(
+                    resume_analysis=_empty_analysis(str(e)),
+                    overall_score=0,
+                    file_name=file_name,
+                    processing_status="failed",
+                    error_message=str(e),
+                    provider_used="vercel_gateway",
+                    model_used=target_model,
+                )
+
+    # Route B: Gemini Direct (or Auto with Gemini configured)
+    else:
+        try:
+            raw_result = analyze_resume(doc, job_description, client=client)
+            provider_used = "gemini"
+            model_used = GEMINI_MODEL
+        except Exception as e:
+            logger.warning("Gemini Direct failed for %s: %s", file_name, e)
+            if provider == "auto" and can_use_gateway:
+                try:
+                    logger.info("Falling back to Vercel AI Gateway for %s...", file_name)
+                    target_model = gateway_model or AI_GATEWAY_DEFAULT_MODEL
+                    raw_result = analyze_resume_gateway(doc, job_description, model=target_model)
+                    provider_used = "vercel_gateway"
+                    model_used = target_model
+                except Exception as fb_err:
+                    return FullResumeAnalysis(
+                        resume_analysis=_empty_analysis(f"Gemini failed: {e}; Gateway fallback: {fb_err}"),
+                        overall_score=0,
+                        file_name=file_name,
+                        processing_status="failed",
+                        error_message=f"Gemini failed: {e}. Gateway fallback failed: {fb_err}",
+                    )
+            else:
+                return FullResumeAnalysis(
+                    resume_analysis=_empty_analysis(str(e)),
+                    overall_score=0,
+                    file_name=file_name,
+                    processing_status="failed",
+                    error_message=str(e),
+                    provider_used="gemini",
+                    model_used=GEMINI_MODEL,
+                )
 
     # Step 3: Parse and validate
     try:
-        # Extract job match if present
         job_match_data = raw_result.pop("job_match", None)
-
         analysis = ResumeAnalysis.model_validate(raw_result)
 
         job_match: JobMatchAnalysis | None = None
@@ -171,13 +244,15 @@ def analyze_single_resume(
                 logger.warning("Failed to parse job match: %s", e)
 
     except Exception as e:
-        logger.error("Failed to parse Gemini output for %s: %s", file_name, e)
+        logger.error("Failed to parse model output for %s: %s", file_name, e)
         return FullResumeAnalysis(
             resume_analysis=_empty_analysis(f"Failed to parse analysis: {e}"),
             overall_score=0,
             file_name=file_name,
             processing_status="failed",
             error_message=f"Output parsing failed: {e}",
+            provider_used=provider_used,
+            model_used=model_used,
         )
 
     # Step 4: Deterministic overall score
@@ -196,6 +271,8 @@ def analyze_single_resume(
         overall_score=overall_score,
         file_name=file_name,
         processing_status="success",
+        provider_used=provider_used,
+        model_used=model_used,
     )
 
 
@@ -203,6 +280,8 @@ def analyze_batch(
     files: list[tuple[str, bytes]],
     job_description: str | None = None,
     progress_callback=None,
+    provider: str = "auto",
+    gateway_model: str | None = None,
 ) -> RecruiterResults:
     """Analyze multiple resumes in batch.
 
@@ -213,6 +292,8 @@ def analyze_batch(
         files: List of (file_name, file_bytes) tuples.
         job_description: Optional job description for matching.
         progress_callback: Optional callable(current, total, file_name, status) for UI updates.
+        provider: 'auto', 'gemini', or 'gateway'.
+        gateway_model: Specific model ID for Vercel AI Gateway.
 
     Returns:
         RecruiterResults with all analyses and comparison data.
@@ -233,7 +314,13 @@ def analyze_batch(
         if progress_callback:
             progress_callback(i, total, file_name, "processing")
 
-        result = analyze_single_resume(file_name, file_bytes, job_description)
+        result = analyze_single_resume(
+            file_name,
+            file_bytes,
+            job_description,
+            provider=provider,
+            gateway_model=gateway_model,
+        )
         detailed.append(result)
 
         if result.processing_status == "failed":

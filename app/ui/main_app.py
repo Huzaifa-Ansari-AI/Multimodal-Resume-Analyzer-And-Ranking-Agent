@@ -32,12 +32,17 @@ except Exception:
     pass
 
 from app.config import (
+    AI_GATEWAY_API_KEY,
+    AI_GATEWAY_DEFAULT_MODEL,
     FAIRNESS_NOTICE,
+    GEMINI_API_KEY,
     MAX_BATCH_SIZE,
     PRIVACY_NOTICE,
     SCORING_WEIGHTS,
     SUPPORTED_EXTENSIONS,
     SUPPORTED_FORMATS_DISPLAY,
+    get_ai_gateway_api_key,
+    get_gemini_api_key,
 )
 from app.models.resume import FullResumeAnalysis, ResumeLevel
 from app.services.job_matcher import get_match_reasons, has_job_match
@@ -125,7 +130,13 @@ def render_single_result(result: FullResumeAnalysis):
 
     # -- Top section: Score + Verdict --
     st.markdown("---")
-    st.markdown(f"### 📋 Resume Analysis — {a.candidate_name}")
+    head_col1, head_col2 = st.columns([3, 1])
+    with head_col1:
+        st.markdown(f"### 📋 Resume Analysis — {a.candidate_name}")
+    with head_col2:
+        prov_label = "⚡ Vercel AI Gateway" if result.provider_used == "vercel_gateway" else "✨ Gemini Direct"
+        m_label = result.model_used or "Default"
+        st.caption(f"**Engine:** {prov_label} (`{m_label}`)")
 
     col1, col2 = st.columns([1, 2])
 
@@ -511,6 +522,48 @@ def main():
 
     job_desc = job_description.strip() if job_description and job_description.strip() else None
 
+    # AI Provider & Model Routing Settings
+    can_gemini = bool(get_gemini_api_key() or GEMINI_API_KEY)
+    can_gateway = bool(get_ai_gateway_api_key() or AI_GATEWAY_API_KEY)
+
+    with st.expander("⚙️ AI Provider & Model Routing (Multi-Model Support)", expanded=False):
+        pcol1, pcol2 = st.columns([1, 1])
+        with pcol1:
+            provider_choice = st.selectbox(
+                "Routing Strategy:",
+                [
+                    "Auto (Gemini Direct + Vercel Failover)",
+                    "Google Gemini Direct (Native Multimodal)",
+                    "Vercel AI Gateway ($5 Monthly Credit)",
+                ],
+                index=0,
+                help="Auto uses Gemini Direct for native multimodal documents and automatically falls back to Vercel AI Gateway if rate-limited.",
+            )
+        with pcol2:
+            gateway_model_options = [
+                "google/gemini-2.5-flash",
+                "openai/gpt-4o-mini",
+                "meta/llama-3.3-70b",
+                "anthropic/claude-3-5-sonnet",
+            ]
+            selected_gateway_model = st.selectbox(
+                "Vercel Gateway Model:",
+                gateway_model_options,
+                index=0,
+                help="Model to use when requests run through Vercel AI Gateway.",
+            )
+
+        gemini_status = "🟢 Configured" if can_gemini else "⚪ Missing Key"
+        gateway_status = "🟢 Configured ($5 Free Credit)" if can_gateway else "⚪ Missing Key"
+        st.caption(f"**Key Status:** Gemini Direct: {gemini_status} · Vercel AI Gateway: {gateway_status}")
+
+    if "Auto" in provider_choice:
+        selected_provider = "auto"
+    elif "Gateway" in provider_choice:
+        selected_provider = "gateway"
+    else:
+        selected_provider = "gemini"
+
     st.markdown("---")
 
     # -----------------------------------------------------------------------
@@ -534,10 +587,14 @@ def main():
                 with st.status("Analyzing resume...", expanded=True) as status:
                     st.write("📂 File received")
                     st.write(f"📄 Document type: {uploaded_file.type or 'auto-detect'}")
-                    st.write("🔍 Analyzing document with AI...")
+                    st.write(f"🔍 Analyzing document with AI ({selected_provider.title()})...")
 
                     result = analyze_single_resume(
-                        uploaded_file.name, file_bytes, job_desc
+                        uploaded_file.name,
+                        file_bytes,
+                        job_desc,
+                        provider=selected_provider,
+                        gateway_model=selected_gateway_model,
                     )
 
                     if result.processing_status == "success":
@@ -585,7 +642,13 @@ def main():
                         progress_bar.progress(pct, text=f"{status_icon} {file_name} ({current}/{total})")
                         status_text.text(f"Processing: {file_name}...")
 
-                    results = analyze_batch(files, job_desc, progress_callback)
+                    results = analyze_batch(
+                        files,
+                        job_desc,
+                        progress_callback,
+                        provider=selected_provider,
+                        gateway_model=selected_gateway_model,
+                    )
 
                     progress_bar.progress(1.0, text="Batch analysis complete!")
                     status_text.empty()

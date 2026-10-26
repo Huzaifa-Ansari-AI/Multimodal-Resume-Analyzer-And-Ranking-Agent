@@ -82,8 +82,9 @@ File Upload → Validation → Type Detection → Multimodal Processing → Gemi
 
 | Component | Technology |
 |-----------|-----------|
-| AI Model | Google Gemini 3.8 Flash (multimodal) |
-| SDK | google-genai >= 2.3.0 |
+| Primary AI Engine | Google Gemini 3.6 Flash (native multimodal) |
+| Failover & Gateway | Vercel AI Gateway ($5 monthly credit, 400+ models) |
+| SDKs | `google-genai >= 2.3.0`, `openai >= 1.0.0` |
 | UI | Streamlit |
 | Validation | Pydantic v2 |
 | DOCX Processing | python-docx |
@@ -95,7 +96,7 @@ File Upload → Validation → Type Detection → Multimodal Processing → Gemi
 
 ### Prerequisites
 - Python 3.10+
-- [Google Gemini API key](https://aistudio.google.com/apikey)
+- [Google Gemini API key](https://aistudio.google.com/apikey) (or [Vercel AI Gateway Key](https://vercel.com/~/ai-gateway))
 
 ### Installation
 
@@ -120,8 +121,9 @@ pip install -r requirements.txt
 copy .env.example .env     # Windows
 # cp .env.example .env     # macOS/Linux
 
-# Edit .env and add your Gemini API key
-# GEMINI_API_KEY=your_key_here
+# Edit .env and add your API keys:
+# GEMINI_API_KEY=your_gemini_key_here
+# AI_GATEWAY_API_KEY=your_vercel_gateway_key_here  (Optional backup / multi-model routing)
 ```
 
 ### Run Locally

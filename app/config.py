@@ -24,9 +24,31 @@ def get_gemini_api_key() -> str:
     return ""
 
 
+def get_ai_gateway_api_key() -> str:
+    """Retrieve Vercel AI Gateway API key from environment variables or Streamlit secrets."""
+    key = os.getenv("AI_GATEWAY_API_KEY", "").strip()
+    if key:
+        return key
+
+    try:
+        import streamlit as st
+        if hasattr(st, "secrets") and "AI_GATEWAY_API_KEY" in st.secrets:
+            return str(st.secrets["AI_GATEWAY_API_KEY"]).strip().replace("\n", "").replace("\r", "")
+    except Exception:
+        pass
+
+    return ""
+
+
 GEMINI_API_KEY: str = get_gemini_api_key()
 GEMINI_MODEL: str = os.getenv("GEMINI_MODEL", "gemini-3.6-flash")
 GEMINI_FALLBACK_MODEL: str = os.getenv("GEMINI_FALLBACK_MODEL", "gemini-3.5-flash-lite")
+
+# Vercel AI Gateway
+AI_GATEWAY_API_KEY: str = get_ai_gateway_api_key()
+VERCEL_GATEWAY_BASE_URL: str = os.getenv("VERCEL_GATEWAY_BASE_URL", "https://ai-gateway.vercel.sh/v1")
+AI_GATEWAY_DEFAULT_MODEL: str = os.getenv("AI_GATEWAY_DEFAULT_MODEL", "google/gemini-2.5-flash")
+AI_PROVIDER_DEFAULT: str = os.getenv("AI_PROVIDER_DEFAULT", "auto")  # 'auto', 'gemini', 'gateway'
 
 # Maximum file size for inline base64 (20 MB). Larger files use the Files API.
 INLINE_SIZE_LIMIT_BYTES: int = 20 * 1024 * 1024

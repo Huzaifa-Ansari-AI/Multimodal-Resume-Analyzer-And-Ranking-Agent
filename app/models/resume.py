@@ -231,6 +231,8 @@ class FullResumeAnalysis(BaseModel):
     file_name: str = Field(default="", description="Original uploaded file name")
     processing_status: str = Field(default="success", description="success, failed, or partial")
     error_message: Optional[str] = Field(default=None, description="Error details if failed")
+    provider_used: str = Field(default="gemini", description="AI provider used (gemini or vercel_gateway)")
+    model_used: Optional[str] = Field(default=None, description="Specific model ID used for analysis")
 
 
 # ---------------------------------------------------------------------------
