@@ -1,4 +1,4 @@
-"""Multimodal Resume Analyzer & Recruiter Ranking Agent — Streamlit App.  
+"""Multimodal Resume Analyzer & Recruiter Ranking Agent — Streamlit App.   
   
 Entry point: streamlit run app/ui/main_app.py
 
