@@ -1,6 +1,6 @@
 """Multimodal Resume Analyzer & Recruiter Ranking Agent — Streamlit App.  
   
-Entry point: streamlit run app/ui/main_app.py 
+Entry point: streamlit run app/ui/main_app.py  
  
 Provides two modes:
 1. Resume Analysis — single resume quality analysis with optional job matching
