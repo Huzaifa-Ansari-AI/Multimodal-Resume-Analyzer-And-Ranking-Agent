@@ -189,7 +189,7 @@ The project is deployed on **Streamlit Community Cloud** and accessible globally
 
 ### Deploying Your Own Instance
 
-1. Fork or clone this repository
+1. Fork this repository
 2. Go to [share.streamlit.io](https://share.streamlit.io)
 3. Connect your repository
 4. Set `GEMINI_API_KEY` in **App Settings → Secrets**:
@@ -228,10 +228,3 @@ CMD ["streamlit", "run", "app/ui/main_app.py", "--server.port=8501"]
 5. **Custom rubrics** — User-defined scoring criteria for specific industries
 6. **Async batch processing** — Parallel resume analysis for faster batch results
 
-## 📄 License
-
-This project is for educational and portfolio purposes.
-
----
-
-Built with ❤️ using Google Gemini AI
